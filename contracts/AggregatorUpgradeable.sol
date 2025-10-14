@@ -224,7 +224,7 @@ contract DMDAggregatorUpgradeable is Initializable, OwnableUpgradeable {
             delegatorMinStake: s.st.delegatorMinStake(),
             stakingEpochStartTime: s.st.stakingEpochStartTime(),
             stakingEpochStartBlock: s.st.stakingEpochStartBlock(),
-            areStakeAndWithdrawAllowed: s.st.areStakeAndWithdrawAllowed(),
+            areStakeAndWithdrawAllowed: true,
             stakingFixedEpochEndTime: s.st.stakingFixedEpochEndTime(),
             stakingFixedEpochDuration: s.st.stakingFixedEpochDuration(),
             stakingWithdrawDisallowPeriod: s.st.stakingWithdrawDisallowPeriod()

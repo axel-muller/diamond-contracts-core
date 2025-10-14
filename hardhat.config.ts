@@ -23,10 +23,12 @@ const chainIds = {
   alpha5: 777019,
   beta: 27272,
   testnet: 37373,
+  mainnet: 17771,
 };
 
 const config: HardhatUserConfig = {
   solidity: "0.8.25",
+  defaultNetwork: "mainnet",
   networks: {
     hardhat: {
       accounts: {
@@ -72,6 +74,18 @@ const config: HardhatUserConfig = {
       },
       gasPrice: 1000000000,
     },
+    mainnet: {
+      url: "https://rpc.bit.diamonds",
+      chainId: 17771,
+      accounts: {
+        mnemonic: getMnemonic(),
+        path: "m/44'/60'/0'/0",
+        initialIndex: 0,
+        count: 20,
+        passphrase: "",
+      },
+      gasPrice: 1000000000,
+    },
   },
   etherscan: {
     apiKey: "123",
@@ -90,6 +104,14 @@ const config: HardhatUserConfig = {
         urls: {
             apiURL: "http://62.171.133.46:4000/api",
             browserURL: "http://62.171.133.46:4000",
+        },
+      },
+      {
+        network: "mainnet",
+        chainId: 17771,
+        urls: {
+            apiURL: "http://185.205.246.232/api",
+            browserURL: "http://185.205.246.232",
         },
       },
     ],
