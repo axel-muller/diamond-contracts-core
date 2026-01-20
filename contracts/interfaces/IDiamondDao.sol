@@ -107,5 +107,9 @@ interface IDiamondDao {
 
     function daoEpochTotalStakeSnapshot(uint256 daoEpoch) external view returns (uint256);
 
-    function daoPhaseProposals(uint256 daoPhase) external view returns (uint256[] memory);
+    function daoPhaseProposals(uint256 daoPhase, uint256 index) external view returns (uint256);
+
+    function getCurrentPhaseProposals() external view returns (uint256[] memory);
+
+    function MAX_NEW_PROPOSALS() external view returns (uint256);
 }
