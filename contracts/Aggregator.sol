@@ -260,10 +260,18 @@ contract DMDAggregator is Ownable {
         Proposal memory proposal = dao.getProposal(proposalId);
         uint256 totalDaoStake = dao.daoEpochTotalStakeSnapshot(proposal.daoPhaseCount);
 
+        VotingResult memory votingResult;
+        try dao.countVotes(proposalId) returns (VotingResult memory result) {
+            votingResult = result;
+        } catch {
+            // Return empty VotingResult if countVotes fails
+            votingResult = VotingResult(0, 0, 0, 0);
+        }
+
         return ProposalDetails({
             proposal: proposal,
             voters: dao.getProposalVoters(proposalId),
-            votingResult: dao.countVotes(proposalId),
+            votingResult: votingResult,
             votersCount: dao.getProposalVotersCount(proposalId),
             totalDaoStake: totalDaoStake
         });
@@ -284,76 +292,54 @@ contract DMDAggregator is Ownable {
         return getProposalsDetails(activeProposals);
     }
 
-    function getDaoPhaseProposals(uint256 daoPhase) public view returns (ProposalDetails[] memory) {
-        if (daoPhase == dao.daoPhaseCount()) {
-            uint256[] memory current = dao.getCurrentPhaseProposals();
-            return getProposalsDetails(current);
-        }
-
-        // For historic phases, proposals are stored in a fixed-size slot per phase.
-        // Iterate up to MAX_NEW_PROPOSALS and collect non-zero ids.
-        uint256 max = dao.MAX_NEW_PROPOSALS();
-        uint256 count;
-        for (uint256 i = 0; i < max; i++) {
-            uint256 pid = dao.daoPhaseProposals(daoPhase, i);
-            if (pid != 0) {
+    function getDaoPhaseProposals(uint256 daoPhase) public view returns (uint256[] memory) {
+        uint256 i = 0;
+        uint256[] memory tempIds = new uint256[](1000); // Max proposal limit
+        uint256 count = 0;
+        
+        while (true) {
+            try dao.daoPhaseProposals(daoPhase, i) returns (uint256 proposalId) {
+                tempIds[count] = proposalId;
                 count++;
+                i++;
+            } catch {
+                break;
             }
         }
-
-        uint256[] memory ids = new uint256[](count);
-        uint256 k;
-        for (uint256 i = 0; i < max; i++) {
-            uint256 pid = dao.daoPhaseProposals(daoPhase, i);
-            if (pid != 0) {
-                ids[k++] = pid;
-            }
+        
+        // Create result array with exact size
+        uint256[] memory result = new uint256[](count);
+        for (uint256 j = 0; j < count; j++) {
+            result[j] = tempIds[j];
         }
-
-        return getProposalsDetails(ids);
+        
+        return result;
     }
 
     function getHistoricProposals() external view returns (ProposalDetails[] memory) {
-        uint256 phaseCount = dao.daoPhaseCount();
-
-        uint256 max = dao.MAX_NEW_PROPOSALS();
         uint256 totalProposals = 0;
-
-        // Historic phases (1..phaseCount-1)
-        if (phaseCount > 0) {
-            for (uint256 p = 1; p < phaseCount; p++) {
-                for (uint256 i = 0; i < max; i++) {
-                    if (dao.daoPhaseProposals(p, i) != 0) {
-                        totalProposals++;
-                    }
-                }
-            }
+        uint256 phaseCount = dao.daoPhaseCount();
+        
+        // First, count all proposals across all dao phases
+        for (uint256 i = 1; i <= phaseCount; i++) {
+            uint256[] memory proposalIds = getDaoPhaseProposals(i);
+            totalProposals += proposalIds.length;
         }
-
-        // Current phase
-        uint256[] memory current = dao.getCurrentPhaseProposals();
-        totalProposals += current.length;
+        
+        uint256 index = 0;
+        ProposalDetails[] memory historicProposals = new ProposalDetails[](totalProposals);
 
         // Populate the historic proposals array
-        ProposalDetails[] memory historicProposals = new ProposalDetails[](totalProposals);
-        uint256 index = 0;
+        for (uint256 i = 1; i <= phaseCount; i++) {
+            uint256[] memory proposalIds = getDaoPhaseProposals(i);
+            ProposalDetails[] memory phaseProposals = getProposalsDetails(proposalIds);
 
-        // Add historic phases
-        if (phaseCount > 0) {
-            for (uint256 p = 1; p < phaseCount; p++) {
-                ProposalDetails[] memory phaseProposals = getDaoPhaseProposals(p);
-                for (uint256 j = 0; j < phaseProposals.length; j++) {
-                    historicProposals[index++] = phaseProposals[j];
-                }
+            for (uint256 j = 0; j < phaseProposals.length; j++) {
+                historicProposals[index] = phaseProposals[j];
+                index++;
             }
         }
-
-        // Add current phase
-        ProposalDetails[] memory active = getActiveProposals();
-        for (uint256 j = 0; j < active.length; j++) {
-            historicProposals[index++] = active[j];
-        }
-
+        
         return historicProposals;
     }
 }
