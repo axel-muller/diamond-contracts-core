@@ -19,9 +19,6 @@ const mnemonic: string = process.env.MNEMONIC ? process.env.MNEMONIC : ethers.Mn
 
 const chainIds = {
   hardhat: 31337,
-  alpha4: 777018,
-  alpha5: 777019,
-  beta: 27272,
   testnet: 37373,
   mainnet: 17771,
 };
@@ -41,30 +38,8 @@ const config: HardhatUserConfig = {
       hardfork: "istanbul",
       minGasPrice: 0
     },
-    alpha4: {
-      url: "http://62.171.133.46:54100",
-      accounts: {
-        mnemonic: getMnemonic(),
-        path: "m/44'/60'/0'/0",
-        initialIndex: 0,
-        count: 20,
-        passphrase: "",
-      },
-      gasPrice: 1000000000,
-    },
-    beta: {
-      url: "https://beta-rpc.bit.diamonds",
-      accounts: {
-        mnemonic: getMnemonic(),
-        path: "m/44'/60'/0'/0",
-        initialIndex: 0,
-        count: 20,
-        passphrase: "",
-      },
-      gasPrice: 1000000000,
-    },
     testnet: {
-      url: "http://62.171.133.46:20100",
+      url: "https://rpc-testnet.bit.diamonds",
       accounts: {
         mnemonic: getMnemonic(),
         path: "m/44'/60'/0'/0",
@@ -91,14 +66,6 @@ const config: HardhatUserConfig = {
     apiKey: "123",
     customChains: [
       {
-        network: "beta",
-        chainId: 27272,
-        urls: {
-          apiURL: "https://beta-explorer.bit.diamonds/api",
-          browserURL: "https://beta-explorer.bit.diamonds",
-        },
-      },
-      {
         network: "testnet",
         chainId: 37373,
         urls: {
@@ -110,8 +77,8 @@ const config: HardhatUserConfig = {
         network: "mainnet",
         chainId: 17771,
         urls: {
-            apiURL: "http://185.205.246.232/api",
-            browserURL: "http://185.205.246.232",
+            apiURL: "https://explorer.bit.diamonds/api",
+            browserURL: "https://explorer.bit.diamonds",
         },
       },
     ],
