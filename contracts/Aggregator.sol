@@ -199,7 +199,7 @@ contract DMDAggregator is Ownable {
             delegatorMinStake: st.delegatorMinStake(),
             stakingEpochStartTime: st.stakingEpochStartTime(),
             stakingEpochStartBlock: st.stakingEpochStartBlock(),
-            areStakeAndWithdrawAllowed: st.areStakeAndWithdrawAllowed(),
+            areStakeAndWithdrawAllowed: true,
             stakingFixedEpochEndTime: st.stakingFixedEpochEndTime(),
             stakingFixedEpochDuration: st.stakingFixedEpochDuration(),
             stakingWithdrawDisallowPeriod: st.stakingWithdrawDisallowPeriod()

@@ -1,6 +1,8 @@
 {
   "scripts": {
-    "deploy-for-chainspec": "npx hardhat run scripts/deployForChainspec.ts"
+    "deploy-for-chainspec": "npx hardhat run scripts/deployForChainspec.ts",
+    "deploy": "npx hardhat run scripts/deploy.ts",
+    "printData": "npx hardhat run scripts/printData.ts"
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-ethers": "^3.0.6",

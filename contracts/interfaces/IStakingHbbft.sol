@@ -8,7 +8,6 @@ interface IStakingHbbft {
     function delegatorMinStake() external view returns (uint256);
     function stakingEpochStartTime() external view returns (uint256);
     function stakingEpochStartBlock() external view returns (uint256);
-    function areStakeAndWithdrawAllowed() external view returns (bool);
     function stakeAmountTotal(address) external view returns (uint256);
     function poolNodeOperator(address) external view returns (address);
     function stakingFixedEpochEndTime() external view returns (uint256);
