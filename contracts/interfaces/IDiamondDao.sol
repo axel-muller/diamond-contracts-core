@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity =0.8.25;
 
-import { DaoPhase, Phase, Proposal, ProposalState, Vote, VotingResult } from "../library/DaoStructs.sol";
+import { OpenProposalMajority, DaoPhase, Phase, Proposal, ProposalState, Vote, VotingResult } from "../library/DaoStructs.sol";
 
 interface IDiamondDao {
     event ProposalCreated(
@@ -42,10 +42,8 @@ interface IDiamondDao {
     event SetChangeAbleParameters(bool indexed allowed, string setter, string getter, uint256[] params);
 
     error InsufficientFunds();
-    error InvalidArgument();
     error InvalidStartTimestamp();
     error NewProposalsLimitExceeded();
-    error OnlyGovernance();
     error OnlyProposer();
     error OnlyValidators(address caller);
     error ProposalAlreadyExist(uint256 proposalId);
@@ -67,7 +65,8 @@ interface IDiamondDao {
         bytes[] memory calldatas,
         string memory title,
         string memory description,
-        string memory discussionUrl
+        string memory discussionUrl,
+        OpenProposalMajority majority
     ) external payable;
 
     function cancel(uint256 proposalId, string calldata reason) external;
@@ -107,5 +106,9 @@ interface IDiamondDao {
 
     function daoEpochTotalStakeSnapshot(uint256 daoEpoch) external view returns (uint256);
 
-    function daoPhaseProposals(uint256 daoPhase) external view returns (uint256[] memory);
+    function daoPhaseProposals(uint256 daoPhase, uint256 index) external view returns (uint256);
+
+    function getCurrentPhaseProposals() external view returns (uint256[] memory);
+
+    function MAX_NEW_PROPOSALS() external view returns (uint256);
 }

@@ -14,14 +14,14 @@ import { IConnectivityTracker } from "./interfaces/IConnectivityTracker.sol";
 import { DaoPhase, Proposal, ProposalState, ProposalType, VotingResult } from "./library/DaoStructs.sol";
 
 contract DMDAggregator is Ownable {
-    IDiamondDao dao;
-    IStakingHbbft st;
-    ITxPermission tp;
-    IKeyGenHistory kh;
-    IBlockRewardHbbft br;
-    IBonusScoreSystem bs;
-    IValidatorSetHbbft vs;
-    IConnectivityTracker ct;
+    IDiamondDao public dao;
+    IStakingHbbft public st;
+    ITxPermission public tp;
+    IKeyGenHistory public kh;
+    IBlockRewardHbbft public br;
+    IBonusScoreSystem public bs;
+    IValidatorSetHbbft public vs;
+    IConnectivityTracker public ct;
 
     constructor(address initialOwner, address _st, address _vs, address _tp, address _dao) Ownable(initialOwner) {
         dao = IDiamondDao(_dao);
@@ -54,7 +54,6 @@ contract DMDAggregator is Ownable {
         uint256 delegatorMinStake;
         uint256 stakingEpochStartTime;
         uint256 stakingEpochStartBlock;
-        bool areStakeAndWithdrawAllowed;
         uint256 stakingFixedEpochEndTime;
         uint256 stakingFixedEpochDuration;
         uint256 stakingWithdrawDisallowPeriod;
@@ -199,7 +198,6 @@ contract DMDAggregator is Ownable {
             delegatorMinStake: st.delegatorMinStake(),
             stakingEpochStartTime: st.stakingEpochStartTime(),
             stakingEpochStartBlock: st.stakingEpochStartBlock(),
-            areStakeAndWithdrawAllowed: true,
             stakingFixedEpochEndTime: st.stakingFixedEpochEndTime(),
             stakingFixedEpochDuration: st.stakingFixedEpochDuration(),
             stakingWithdrawDisallowPeriod: st.stakingWithdrawDisallowPeriod()
@@ -262,12 +260,20 @@ contract DMDAggregator is Ownable {
         Proposal memory proposal = dao.getProposal(proposalId);
         uint256 totalDaoStake = dao.daoEpochTotalStakeSnapshot(proposal.daoPhaseCount);
 
+        VotingResult memory votingResult;
+        try dao.countVotes(proposalId) returns (VotingResult memory result) {
+            votingResult = result;
+        } catch {
+            // Return empty VotingResult if countVotes fails
+            votingResult = VotingResult(0, 0, 0, 0);
+        }
+
         return ProposalDetails({
             proposal: proposal,
             voters: dao.getProposalVoters(proposalId),
-            votingResult: dao.countVotes(proposalId),
+            votingResult: votingResult,
             votersCount: dao.getProposalVotersCount(proposalId),
-            totalDaoStake: totalDaoStake > 0 ? totalDaoStake : st.stakeAmountTotal(address(dao))
+            totalDaoStake: totalDaoStake
         });
     }
 
@@ -282,13 +288,32 @@ contract DMDAggregator is Ownable {
     }
 
     function getActiveProposals() public view returns (ProposalDetails[] memory) {
-        uint256[] memory activeProposals = dao.currentPhaseProposals();
+        uint256[] memory activeProposals = dao.getCurrentPhaseProposals();
         return getProposalsDetails(activeProposals);
     }
 
-    function getDaoPhaseProposals(uint256 daoPhase) public view returns (ProposalDetails[] memory) {
-        uint256[] memory daoPhaseProposals = dao.daoPhaseProposals(daoPhase);
-        return getProposalsDetails(daoPhaseProposals);
+    function getDaoPhaseProposals(uint256 daoPhase) public view returns (uint256[] memory) {
+        uint256 i = 0;
+        uint256[] memory tempIds = new uint256[](1000); // Max proposal limit
+        uint256 count = 0;
+        
+        while (true) {
+            try dao.daoPhaseProposals(daoPhase, i) returns (uint256 proposalId) {
+                tempIds[count] = proposalId;
+                count++;
+                i++;
+            } catch {
+                break;
+            }
+        }
+        
+        // Create result array with exact size
+        uint256[] memory result = new uint256[](count);
+        for (uint256 j = 0; j < count; j++) {
+            result[j] = tempIds[j];
+        }
+        
+        return result;
     }
 
     function getHistoricProposals() external view returns (ProposalDetails[] memory) {
@@ -297,21 +322,17 @@ contract DMDAggregator is Ownable {
         
         // First, count all proposals across all dao phases
         for (uint256 i = 1; i <= phaseCount; i++) {
-            uint256[] memory proposalIds = dao.daoPhaseProposals(i);
+            uint256[] memory proposalIds = getDaoPhaseProposals(i);
             totalProposals += proposalIds.length;
         }
         
         uint256 index = 0;
-        ProposalDetails[] memory phaseProposals;
         ProposalDetails[] memory historicProposals = new ProposalDetails[](totalProposals);
 
         // Populate the historic proposals array
         for (uint256 i = 1; i <= phaseCount; i++) {
-            if (i == phaseCount) {
-                phaseProposals = getActiveProposals();
-            } else {
-                phaseProposals = getDaoPhaseProposals(i);
-            }
+            uint256[] memory proposalIds = getDaoPhaseProposals(i);
+            ProposalDetails[] memory phaseProposals = getProposalsDetails(proposalIds);
 
             for (uint256 j = 0; j < phaseProposals.length; j++) {
                 historicProposals[index] = phaseProposals[j];
