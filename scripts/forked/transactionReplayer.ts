@@ -1,78 +1,84 @@
-import { ethers } from 'hardhat';
-import * as helpers from "@nomicfoundation/hardhat-network-helpers";
-import * as Ethers from "ethers";
+import hre from "hardhat";
+import { createPublicClient, http, type Address, type Hex } from "viem";
 
+interface PendingTransaction {
+  hash: Hex;
+  from: Address;
+  to: Address | null;
+  input: Hex;
+  value: Hex;
+}
 
 /// Transaction Replayer is able to replay pending transactions from one RPC on the configured network.
 /// This might be a hardhat forked network, and synergises well with it to replay transactions that could not get included
 /// in the original network, because it did lead to a problem in the block finalization.
 /// Here is an example how to spin up a forked Network, used in testing of the alpha4 network.
 /// Spin up a Node:
-/// `hh node --fork http://62.171.133.46:54100 --fork-block-number 450019`
+/// `pnpm hardhat node --fork http://62.171.133.46:54100 --fork-block-number 450019`
 /// Add a new external network in the hardhat config.
-/// ```        forked: {
+///
+/// ```json
+// forked: {
+///    type: "http",
+///    chainType: "l1",
 ///    url: "http://127.0.0.1:8545",
 ///    timeout: 1_000_000
-///    },
+///},
 /// ```
 /// Then you can use the TransactionReplayer to replay the transactions from the original RPC.
 /// ```typescript
-/// import { TransactionReplayer } from "./forked/transactionReplayer";
-/// let replayer = new TransactionReplayer("http://62.171.133.46:54100");
+/// import { TransactionReplayer } from "./forked/transactionReplayer.js";
+/// const replayer = new TransactionReplayer("http://62.171.133.46:54100");
 /// await replayer.replayAllPendingTransactions();
+/// ```
 export class TransactionReplayer {
-    public constructor(public originalRPC: string) {
+  public constructor(public originalRPC: string) {}
 
+  public async replayAllPendingTransactions() {
+    const { viem, networkHelpers } = await hre.network.getOrCreate();
+
+    const txs = await this.getPendingTransactions();
+
+    for (const x of txs) {
+      console.log("--- original hash:", x.hash);
+      const tx = {
+        to: x.to ?? undefined,
+        data: x.input,
+        value: BigInt(x.value),
+        gas: 5_000_000n,
+        gasPrice: 1_000_000_000n,
+      };
+
+      await networkHelpers.impersonateAccount(x.from);
+      const signer = await viem.getWalletClient(x.from);
+
+      try {
+        const hash = await signer.sendTransaction(tx);
+        console.log("OK: ", hash);
+      } catch (e) {
+        console.log("Error: ", { from: x.from, ...tx }, e);
+      } finally {
+        await networkHelpers.stopImpersonatingAccount(x.from);
+      }
     }
+  }
 
-    public async replayAllPendingTransactions() {
+  public async getPendingTransactions(): Promise<PendingTransaction[]> {
+    // retrieve the pending transactions from original RPC.
+    // returns an array of pending transactions fetched from the RPC.
 
+    const origClient = createPublicClient({ transport: http(this.originalRPC) });
 
-        let txs = await this.getPendingTransactions();
+    const pendingTransactions = await origClient.request({
+      method: "parity_pendingTransactions" as never,
+      params: [] as never,
+    });
 
-        for (let x of txs) {
+    return pendingTransactions as unknown as PendingTransaction[];
+  }
 
-            // send the raw transaction to the new RPC.
-
-
-            console.log("--- original hash:", x.hash);
-            const tx = {
-                from: x.from,
-                to: x.to,
-                data: x.input,
-                value: x.value,
-                gasLimit: "0x4c4b40",
-                gasPrice: "1000000000",
-            };
-
-            await helpers.impersonateAccount(x.from);
-            let signer = await ethers.provider.getSigner(x.from);
-
-            try {
-                const respone = await signer.sendTransaction(tx);
-                console.log("OK: ", respone.hash);
-            } catch (e) {
-                console.log("Error: ", tx);
-            }
-
-        }
-    }
-
-    public async getPendingTransactions() {
-        // retrieve the pending transactions from original RPC.
-        // returns an array of  pending transactions fetched from the RPC.
-
-        // initialize a new Ethers instance for the original RPC.
-        const origProvider = new Ethers.JsonRpcProvider(this.originalRPC);
-
-        // get the pending transactions.
-        const pendingTransactions = await origProvider.send("parity_pendingTransactions", []);
-
-        return pendingTransactions;
-    }
-
-    public async printBlockNumber() {
-        const origProvider = new Ethers.JsonRpcProvider(this.originalRPC);
-        console.log("Block number: ", await origProvider.getBlockNumber());
-    }
+  public async printBlockNumber() {
+    const origClient = createPublicClient({ transport: http(this.originalRPC) });
+    console.log("Block number: ", await origClient.getBlockNumber());
+  }
 }
