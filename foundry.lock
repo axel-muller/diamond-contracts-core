@@ -1,0 +1,32 @@
+{
+  "lib/diamond-contracts-core": {
+    "branch": {
+      "name": "master",
+      "rev": "ccb60b5473b6fbd2d269aef20e0a3f3b22ec6018"
+    }
+  },
+  "lib/diamond-contracts-dao": {
+    "rev": "f3ae3020fe4cab5860b33e911fc4ba1a3cfe2e65"
+  },
+  "lib/forge-std": {
+    "tag": {
+      "name": "v1.16.2",
+      "rev": "bf647bd6046f2f7da30d0c2bf435e5c76a780c1b"
+    }
+  },
+  "lib/openzeppelin-contracts": {
+    "rev": "c5fe13895dc8f4b2986f69d23d813c5329d3724e"
+  },
+  "lib/openzeppelin-contracts-upgradeable": {
+    "tag": {
+      "name": "v5.7.0",
+      "rev": "14f52c54d3a1eefbda3d4071efba24d3c1e07e8a"
+    }
+  },
+  "lib/openzeppelin-foundry-upgrades": {
+    "tag": {
+      "name": "v0.4.1",
+      "rev": "258e12e727bfe7f0ec30c51995d01ec88b82efc1"
+    }
+  }
+}

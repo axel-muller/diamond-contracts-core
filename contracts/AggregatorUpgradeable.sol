@@ -1,24 +1,26 @@
-// SPDX-License-Identifier: Apache 2.0
+// SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity =0.8.25;
 
-import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
-import { IStakingHbbft } from "./interfaces/IStakingHbbft.sol";
-import { ITxPermission } from "./interfaces/ITxPermission.sol";
-import { IKeyGenHistory } from "./interfaces/IKeyGenHistory.sol";
+import { IKeyGenHistory } from "diamond-contracts-core/interfaces/IKeyGenHistory.sol";
+
 import { IBlockRewardHbbft } from "./interfaces/IBlockRewardHbbft.sol";
-import { IValidatorSetHbbft } from "./interfaces/IValidatorSetHbbft.sol";
+import { IStakingHbbftExtended } from "./interfaces/IStakingHbbftExtended.sol";
+import { ITxPermission } from "./interfaces/ITxPermission.sol";
+import { IValidatorSetHbbftExtended } from "./interfaces/IValidatorSetHbbftExtended.sol";
 
 contract DMDAggregatorUpgradeable is Initializable, OwnableUpgradeable {
-    bytes32 private constant DMD_AGGREGATOR_NAMESPACE = keccak256(abi.encode(uint256(keccak256("dmdaggregator.storage")) - 1)) & ~bytes32(uint256(0xff));
+    bytes32 private constant DMD_AGGREGATOR_NAMESPACE =
+        keccak256(abi.encode(uint256(keccak256("dmdaggregator.storage")) - 1)) & ~bytes32(uint256(0xff));
 
     struct DMDAggregatorStorage {
-        IStakingHbbft st;
+        IStakingHbbftExtended st;
         ITxPermission tp;
         IKeyGenHistory kh;
         IBlockRewardHbbft br;
-        IValidatorSetHbbft vs;
+        IValidatorSetHbbftExtended vs;
     }
 
     function _getStorage() private pure returns (DMDAggregatorStorage storage s) {
@@ -34,13 +36,14 @@ contract DMDAggregatorUpgradeable is Initializable, OwnableUpgradeable {
         // Prevents initialization of implementation contract
         _disableInitializers();
     }
-    
+
     function initialize(address contractOwner, address _st, address _vs, address _tp) external initializer {
         __Ownable_init(contractOwner);
         DMDAggregatorStorage storage s = _getStorage();
-        s.st = IStakingHbbft(_st);
+
+        s.st = IStakingHbbftExtended(_st);
         s.tp = ITxPermission(_tp);
-        s.vs = IValidatorSetHbbft(_vs);
+        s.vs = IValidatorSetHbbftExtended(_vs);
         s.kh = IKeyGenHistory(s.vs.keyGenHistoryContract());
         s.br = IBlockRewardHbbft(s.vs.blockRewardContract());
     }
@@ -76,7 +79,7 @@ contract DMDAggregatorUpgradeable is Initializable, OwnableUpgradeable {
         uint256 availableSince;
         bytes publicKey;
         address[] delegators;
-        IValidatorSetHbbft.KeyGenMode keygenMode;
+        IValidatorSetHbbftExtended.KeyGenMode keygenMode;
         uint256 stakedAmountTotal;
     }
 
@@ -129,11 +132,11 @@ contract DMDAggregatorUpgradeable is Initializable, OwnableUpgradeable {
 
     // SETTERS
     function setStakingContract(address _st) external onlyOwner {
-        _getStorage().st = IStakingHbbft(_st);
+        _getStorage().st = IStakingHbbftExtended(_st);
     }
 
     function setValidatorsSetContract(address _vs) external onlyOwner {
-        _getStorage().vs = IValidatorSetHbbft(_vs);
+        _getStorage().vs = IValidatorSetHbbftExtended(_vs);
     }
 
     function setTxPermissionContract(address _tp) external onlyOwner {
@@ -154,7 +157,7 @@ contract DMDAggregatorUpgradeable is Initializable, OwnableUpgradeable {
 
         address[] memory vsValidatorsMiningAddresses = s.vs.getValidators();
         address[] memory vsPendingValidatorsMiningAddresses = s.vs.getPendingValidators();
-        
+
         address[] memory vsValidatorsStakingAddresses = getStakingAddresses(vsValidatorsMiningAddresses);
         address[] memory vsPendingValidatorsStakingAddresses = getStakingAddresses(vsPendingValidatorsMiningAddresses);
 
@@ -186,7 +189,10 @@ contract DMDAggregatorUpgradeable is Initializable, OwnableUpgradeable {
         }
     }
 
-    function getUserStakes(address _user, address[] calldata _pools) external view returns(StakeData[] memory _stakesData) {
+    function getUserStakes(
+        address _user,
+        address[] calldata _pools
+    ) external view returns (StakeData[] memory _stakesData) {
         DMDAggregatorStorage storage s = _getStorage();
         _stakesData = new StakeData[](_pools.length);
 
@@ -199,7 +205,10 @@ contract DMDAggregatorUpgradeable is Initializable, OwnableUpgradeable {
         }
     }
 
-    function getUserOrderedWithdraws(address _user, address[] calldata _pools) external view returns(OrderedWithdrawData[] memory _stakesData) {
+    function getUserOrderedWithdraws(
+        address _user,
+        address[] calldata _pools
+    ) external view returns (OrderedWithdrawData[] memory _stakesData) {
         DMDAggregatorStorage storage s = _getStorage();
         _stakesData = new OrderedWithdrawData[](_pools.length);
 
@@ -231,35 +240,31 @@ contract DMDAggregatorUpgradeable is Initializable, OwnableUpgradeable {
         });
     }
 
-    function getDelegationsData(address[] memory delegators, address poolAddress) external view returns (DelegateData[] memory _delegatesData, uint256 _ownStake, uint256 _candidateStake) {
+    function getDelegationsData(
+        address[] memory delegators,
+        address poolAddress
+    ) external view returns (DelegateData[] memory _delegatesData, uint256 _ownStake, uint256 _candidateStake) {
         DMDAggregatorStorage storage s = _getStorage();
         _delegatesData = new DelegateData[](delegators.length);
 
         for (uint256 i; i < delegators.length; i++) {
             address delegatorAddress = delegators[i];
             uint256 delegatedAmount = s.st.stakeAmount(poolAddress, delegatorAddress);
-            _delegatesData[i] = DelegateData({
-                delegator: delegatorAddress,
-                delegatedAmount: delegatedAmount
-            });
+            _delegatesData[i] = DelegateData({ delegator: delegatorAddress, delegatedAmount: delegatedAmount });
             if (poolAddress != delegatorAddress) _candidateStake += delegatedAmount;
         }
 
         _ownStake = s.st.stakeAmountTotal(poolAddress) - _candidateStake;
     }
 
-    function getStakingAddresses(address[] memory miningAddresses) 
-        public 
-        view 
-        returns (address[] memory)
-    {
+    function getStakingAddresses(address[] memory miningAddresses) public view returns (address[] memory) {
         DMDAggregatorStorage storage s = _getStorage();
         address[] memory stakingAddresses = new address[](miningAddresses.length);
-        
+
         for (uint256 i = 0; i < miningAddresses.length; i++) {
             stakingAddresses[i] = s.vs.stakingByMiningAddress(miningAddresses[i]);
         }
-        
+
         return stakingAddresses;
     }
 }
