@@ -1,0 +1,26 @@
+node_modules/
+cache/
+artifacts/
+.mnemonic*
+
+# diamond-contracts-dao specific
+out/
+
+# Logs
+logs/
+*.log
+
+typechain-types/
+api/contracts/
+
+build/
+dist/
+
+# Coverage
+coverage/
+coverage.json
+
+# IDE
+.vscode/
+
+package-lock.json

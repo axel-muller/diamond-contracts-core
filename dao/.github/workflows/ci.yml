@@ -1,0 +1,67 @@
+name: Build & test
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [24.18.0]
+    permissions:
+      security-events: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+          submodules: recursive
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          version: 11.x.x
+          cache: true
+
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v6
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Build
+        run: pnpm hardhat build
+
+      - name: Run tests with coverage
+        run: pnpm hardhat test --coverage
+
+      - name: "Grype: scan"
+        uses: anchore/scan-action@v7
+        id: grype-scan
+        with:
+          grype-version: latest
+          path: "."
+          config: .grype.yaml
+          fail-build: true
+          severity-cutoff: high
+        env:
+          SYFT_SOURCE_NAME: diamond-contracts-dao
+          SYFT_SOURCE_VERSION: ${{ github.sha }}
+
+      - name: "Grype: publish report"
+        if: always() && steps.grype-scan.outputs.sarif != ''
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: ${{ steps.grype-scan.outputs.sarif }}
+          category: grype
+
+      - name: Coveralls
+        uses: coverallsapp/github-action@master
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
