@@ -2,32 +2,33 @@
     "name": "diamond-contracts-core",
     "version": "4.0.0",
     "description": "Staking and Hbbft shared key management for DMD Diamond",
-    "main": "index.js",
+    "type": "module",
     "scripts": {
         "compile": "pnpm hardhat build",
         "test": "pnpm run clean && pnpm hardhat test",
         "coverage": "pnpm run clean && pnpm hardhat test --coverage",
         "docs-build": "forge doc",
         "clean": "pnpm hardhat clean",
-        "flat": "bash scripts/flatten.sh ./contracts",
-        "mythril": "pnpm run flat && bash scripts/run_mythril.sh ./flat",
+        "flat": "bash ../scripts/flatten.sh ./contracts",
+        "mythril": "pnpm run flat && bash ../scripts/run_mythril.sh ./flat",
         "solhint": "./node_modules/.bin/solhint -f table 'contracts/**/*.sol'",
         "solhint:ci": "./node_modules/.bin/solhint --disc --max-warnings 0 -f compact 'contracts/**/*.sol' > /dev/null",
         "solhint:sarif-report": "./node_modules/.bin/solhint --disc -f sarif 'contracts/**/*.sol' > solhint_report.sarif",
-        "getFunctionSignatures": "node scripts/getFunctionSignatures.js",
-        "oz-manifest": "npx hardhat run --network hardhat scripts/generateNetworkManifest.ts",
-        "spec": "npm run oz-manifest && npx hardhat make_spec_hbbft --init-contracts initial-contracts.json --use-upgrade-proxy init-data.json",
+        "getFunctionSignatures": "node ../scripts/getFunctionSignatures.js",
+        "oz-manifest": "npx hardhat run --network hardhat ../scripts/generateNetworkManifest.ts",
+        "spec": "npm run oz-manifest && npx hardhat make_spec_hbbft --init-contracts ../initial-contracts.json --use-upgrade-proxy init-data.json",
         "type-check": "npx tsc --noEmit 2>&1 | grep test/"
     },
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/DMDcoin/diamond-contracts-core.git"
+        "url": "git+https://github.com/DMDcoin/contracts-monorepo.git",
+        "directory": "core"
     },
     "author": "thomashaller@gmx.at",
     "bugs": {
-        "url": "https://github.com/DMDcoin/diamond-contracts-core/issues"
+        "url": "https://github.com/DMDcoin/contracts-monorepo/issues"
     },
-    "homepage": "https://github.com/DMDcoin/diamond-contracts-core#readme",
+    "homepage": "https://github.com/DMDcoin/contracts-monorepo/core#readme",
     "devDependencies": {
         "@nomicfoundation/hardhat-foundry": "^3.0.4",
         "@nomicfoundation/hardhat-ledger": "^3.0.10",
@@ -48,13 +49,5 @@
         "ts-node": "^10.9.2",
         "typescript": "^7.0.2",
         "viem": "^2.55.2"
-    },
-    "type": "module",
-    "devEngines": {
-        "packageManager": {
-            "name": "pnpm",
-            "version": ">=11.0.0 <12.0.0",
-            "onFail": "error"
-        }
     }
 }

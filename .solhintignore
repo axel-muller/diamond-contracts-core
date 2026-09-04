@@ -1,0 +1,5 @@
+core/contracts/mocks/**
+dao/contracts/mocks/**
+views/contracts/mocks/**
+lib/**
+**/node_modules/**

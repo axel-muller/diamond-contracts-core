@@ -1,0 +1,29 @@
+{
+    "compilerOptions": {
+        "declaration": true,
+        "declarationMap": true,
+        "emitDecoratorMetadata": true,
+        "esModuleInterop": true,
+        "experimentalDecorators": true,
+        "forceConsistentCasingInFileNames": true,
+        "lib": ["es6"],
+        "module": "node20",
+        "noImplicitAny": true,
+        "removeComments": true,
+        "resolveJsonModule": true,
+        "sourceMap": true,
+        "strict": true,
+        "target": "es2020"
+    },
+    "files": [
+        "./core/hardhat.config.ts",
+        "./dao/hardhat.config.ts",
+        "./views/hardhat.config.ts"
+    ],
+    "include": [
+        "**/test/**/*.ts",
+        "**/scripts/**/*.ts",
+        "**/tasks/**/*.ts",
+        "**/utils/**/*.ts"
+    ]
+}

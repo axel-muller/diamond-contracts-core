@@ -1,0 +1,33 @@
+{
+    "name": "@dmdcoin/contracts-monorepo",
+    "version": "4.0.0",
+    "scripts": {
+        "build": "pnpm run build:core && pnpm run build:dao && pnpm run build:views",
+        "build:core": "pnpm --dir core run build",
+        "build:dao": "pnpm --dir dao run build",
+        "build:views": "pnpm --dir views run build",
+
+        "test": "pnpm run test:core && pnpm run test:dao && pnpm run test:views",
+        "test:core": "pnpm --dir core run test",
+        "test:dao": "pnpm --dir dao run test",
+        "test:views": "pnpm --dir views run test",
+
+        "coverage": "pnpm run coverage:core && pnpm run coverage:dao && pnpm run coverage:views",
+        "coverage:core": "pnpm --dir core run coverage",
+        "coverage:dao": "pnpm --dir dao run coverage",
+        "coverage:views": "pnpm --dir views run coverage",
+
+        "lint": "pnpm --dir core run solhint:ci && pnpm --dir dao run solhint:ci && pnpm --dir views run lint",
+        "clean": "pnpm --dir core run clean && pnpm --dir dao run clean && pnpm --dir views run clean",
+
+        "spec": "pnpm run build && pnpm --dir core run spec",
+        "ci": "pnpm run lint && pnpm run test"
+    },
+    "devEngines": {
+        "packageManager": {
+            "name": "pnpm",
+            "version": ">=11.0.0 <12.0.0",
+            "onFail": "error"
+        }
+    }
+}

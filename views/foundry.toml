@@ -1,62 +1,25 @@
 [profile.default]
+extends = "../foundry.base.toml"
 src = "contracts"
 out = "out"
-libs = ["lib"]
-solc = "0.8.25"
-evm_version = "london"
-optimizer = true
-optimizer_runs = 800
-via_ir = true
-ffi = true
-ast = true
-build_info = true
-extra_output = ["storageLayout"]
+libs = ["../lib"]
+no_match_coverage = "contracts/mocks/.*|scripts/*"
 
 remappings = [
-    "forge-std/=lib/forge-std/src/",
-    "@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/",
-    "@openzeppelin/contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/",
-    "openzeppelin-foundry-upgrades/=lib/openzeppelin-foundry-upgrades/src/",
-    "diamond-contracts-core/=lib/diamond-contracts-core/contracts/",
-    "diamond-contracts-dao/=lib/diamond-contracts-dao/contracts/",
+    "forge-std/=../lib/forge-std/src/",
+    "@openzeppelin/contracts/=../lib/openzeppelin-contracts/contracts/",
+    "@openzeppelin/contracts-upgradeable/=../lib/openzeppelin-contracts-upgradeable/contracts/",
+    "openzeppelin-foundry-upgrades/=../lib/openzeppelin-foundry-upgrades/src/",
+    "diamond-contracts-core/=../core/contracts/",
+    "diamond-contracts-dao/=../dao/contracts/",
 ]
 
-ignored_warnings_from = ["lib/openzeppelin-foundry-upgrades"]
-
-no_match_coverage = "src/mocks/.*|script/*"
-
-[lint]
-lint_on_build = true
-severity = ["high", "medium", "low", "info", "gas"]
-exclude_lints = [
-    "block-timestamp",
-    "mixed-case-function",
-    "pascal-case-struct",
-    "asm-keccak256",
-]
+[fmt]
+line_length = 120
+bracket_spacing = true
+wrap_comments = true
 
 [doc]
 ignore = ["**/*.t.sol"]
 out = "docs"
-repository = "https://github.com/DMDcoin/diamond-contracts-views"
-
-[fmt]
-line_length = 120
-tab_width = 4
-style = "space"
-bracket_spacing = true
-multiline_func_header = "params_first_multi"
-number_underscore = "thousands"
-wrap_comments = true
-docs_style = "line"
-sort_imports = true
-prefer_compact = "none"
-single_line_imports = true
-
-[rpc_endpoints]
-dmd_mainnet = "https://rpc.bit.diamonds"
-dmd_testnet = "http://62.171.133.46:20100"
-
-[etherscan]
-dmd_mainnet = { key = "abc", url = "https://explorer.bit.diamonds/api"}
-dmd_testnet = { key = "abc", url = "https://testnet-explorer.bit.diamonds/api"}
+repository = "https://github.com/DMDcoin/contracts-monorepo/views"
